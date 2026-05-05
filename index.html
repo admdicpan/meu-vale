@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Consulta de Vales - Colaborador</title>
+    
+    <link rel="icon" href="image/favicon.ico" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Vales">
+    <link rel="apple-touch-icon" href="image/apple-touch-icon.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' } }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col items-center justify-center p-4 md:p-8 overscroll-none select-none pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+
+    <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden transition-all duration-300 border border-slate-100">
+        
+        <div class="bg-white p-6 md:p-8 border-b border-slate-100">
+            <div class="flex items-center justify-between gap-3 mb-2">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-primary-50 text-primary-600 rounded-2xl">
+                        <i class="ph ph-receipt text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Vales Corporativos</h1>
+                        <p id="textoSaudacao" class="text-sm text-slate-500 font-medium">Consulte seu extrato do mês</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-1 md:gap-2">
+                    <button onclick="alternarPrivacidade()" class="p-2.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors" title="Ocultar valores">
+                        <i id="iconePrivacidade" class="ph ph-eye text-2xl"></i>
+                    </button>
+                    <button onclick="desconectar()" class="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Sair / Trocar de Código">
+                        <i class="ph ph-sign-out text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-8 flex flex-col md:flex-row gap-4">
+                <div class="relative flex-1">
+                    <i class="ph ph-identification-card absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                    <input type="text" id="codigoInput" 
+                        class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 focus:bg-white transition-all duration-200 text-lg select-text uppercase"
+                        placeholder="Digite seu código..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        spellcheck="false"
+                        autocapitalize="characters">
+                </div>
+                <button id="btnConsultar" onclick="buscarVales()" 
+                    class="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 px-8 rounded-2xl transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 active:scale-[0.98]">
+                    <i class="ph ph-magnifying-glass text-xl" id="btnIcon"></i>
+                    <span id="btnText">Consultar</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="resultadoContainer" class="p-6 md:p-8 bg-slate-50/50 min-h-[300px] flex flex-col items-center justify-center text-center">
+            <div class="fade-in py-8">
+                <i class="ph ph-identification-badge text-slate-300 text-6xl mb-4"></i>
+                <h3 class="text-slate-600 font-semibold text-lg mb-1">Pronto para consultar</h3>
+                <p class="text-slate-400 font-medium max-w-sm mx-auto">Informe seu código de colaborador acima para visualizar o detalhamento dos seus vales.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-8 text-center text-slate-400 text-sm flex items-center justify-center gap-2">
+        <i class="ph ph-shield-check"></i>
+        <span>Dados protegidos e atualizados via sistema interno</span>
+    </div>
+
+    <div id="modalDetalhes" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="p-6" id="modalConteudo"></div>
+        </div>
+    </div>
+
+    <div id="pwaInstallerBanner" class="fixed bottom-0 inset-x-0 z-40 hidden bg-white border-t border-slate-200 py-4 px-4 md:px-8 shadow-lg shadow-slate-200/50 transition-all duration-300 transform translate-y-full">
+        <div class="max-w-4xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-100 text-primary-600 flex items-center justify-center shrink-0">
+                    <i class="ph ph-download-simple text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-slate-800">Instale o app</p>
+                    <p class="text-xs text-slate-500">Use como um aplicativo nativo, sem abrir o navegador.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btnInstalarPwa" class="bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold py-2.5 px-5 rounded-xl transition-colors shadow-md shadow-primary-500/20">
+                    Instalar
+                </button>
+                <button onclick="fecharBannerInstalacao()" class="text-slate-400 hover:text-slate-600 p-2">
+                    <i class="ph ph-x text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
